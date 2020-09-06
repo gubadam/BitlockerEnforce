@@ -43,6 +43,12 @@ Foreach ($currentDrive in $drives){
             # Encrypt based on whether TPM is enabled or not
             if ($isTPMEnabled){
                 Enable-BitLocker -Mountpoint $currentDrive -EncryptionMethod $encryptionMethod -RecoveryKeyPath $recoveryKeyDir -RecoveryKeyProtector -SkipHardwareTest *>>$recoveryKeyFile
+                
+                # Add simple password for secondary drives in case ExternalKey encryptor fails
+                if ($currentDrive -ne $env:SystemDrive){
+                    $SecureString = ConvertTo-SecureString $password -AsPlainText -Force
+                    Add-BitLockerKeyProtector -MountPoint $currentDrive -Password $SecureString -PasswordProtector
+                }
             }else{
                 
                 # If there's no TPM, add a password for unblocking the drive
@@ -59,3 +65,4 @@ Foreach ($currentDrive in $drives){
 }
 # Restore default error action preference
 $ErrorActionPreference = "Continue"
+rm "C:\Windows\temp\BitlockerEnable.ps1"
